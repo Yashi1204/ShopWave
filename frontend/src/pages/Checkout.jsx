@@ -40,7 +40,7 @@ export default function Checkout() {
       const shippingAddress = `${address.street}, ${address.city}, ${address.state} - ${address.pincode}`
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_Sr8NomCnLsssZz',
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_SsPYPwGagZMc5O',
         amount: data.amount,
         currency: data.currency,
         name: 'ShopWave',
