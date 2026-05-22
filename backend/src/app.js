@@ -14,7 +14,7 @@ import wishlistRoutes from './routes/wishlist.js'
 const app = express()
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'https://shop-wave-7qn9acdrg-yashi1204s-projects.vercel.app'],
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'https://shop-wave-ivory.vercel.app'],
   credentials: true
 }))
 
