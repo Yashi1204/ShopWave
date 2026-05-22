@@ -12,9 +12,11 @@ const sign = (user) => jwt.sign(
 
 // Configure nodemailer transporter using environmental variables
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USER || 'yashisahay1204@gmail.com', // fallback hardcoded safety checkpoint
+    user: process.env.EMAIL_USER || 'yashisahay1204@gmail.com',
     pass: process.env.EMAIL_PASS,
   },
 })
