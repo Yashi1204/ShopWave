@@ -1,25 +1,16 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 import pool from '../config/db.js'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 const sign = (user) => jwt.sign(
   { id: user.id, email: user.email, role: user.role },
   process.env.JWT_SECRET || 'dev_secret',
   { expiresIn: '7d' }
 )
-
-// Configure nodemailer transporter using environmental variables
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER || 'yashisahay1204@gmail.com',
-    pass: process.env.EMAIL_PASS,
-  },
-})
 
 export const register = async (req, res) => {
   const { name, email, password } = req.body
@@ -65,39 +56,26 @@ export const getMe = async (req, res) => {
 
 export const forgotPassword = async (req, res) => {
   const { email } = req.body
-  
-  // 🚀 FORCED LOGGER SIGNALS:
-  console.log("==========================================")
-  console.log("📢 BACKEND HIT: forgotPassword route active!")
-  console.log("Target email context:", email)
-  console.log("Current SMTP Config User:", process.env.EMAIL_USER)
-
   try {
     const { rows } = await pool.query('SELECT id FROM users WHERE email=$1', [email])
-    
+
     if (!rows.length) {
-      console.log("⚠️ Database look-up completed: Email does not exist in records.");
       return res.json({ success: true, message: 'If that email exists, a reset link was sent.' })
     }
 
     const token = crypto.randomBytes(32).toString('hex')
-    const expires = Date.now() + 1000 * 60 * 30// 30 Minute PostgreSQL Timestamp handler
+    const expires = Date.now() + 1000 * 60 * 30
 
-    console.log("🔄 Querying Database: Updating reset token schemas...");
     await pool.query(
       'UPDATE users SET reset_token=$1, reset_token_expires=$2 WHERE email=$3',
       [token, expires, email]
     )
-    console.log("✅ Database record synchronized perfectly.");
 
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173'
     const resetUrl = `${clientUrl}/reset-password?token=${token}`
-    
-    console.log("🔗 Generated absolute Reset URL direction:", resetUrl)
-    console.log("✉️ Nodemailer handshaking with Google SMTP server...");
 
-    await transporter.sendMail({
-      from: `"ShopWave" <${process.env.EMAIL_USER || 'yashisahay1204@gmail.com'}>`,
+    await resend.emails.send({
+      from: 'ShopWave <onboarding@resend.dev>',
       to: email,
       subject: 'Reset your ShopWave password',
       html: `
@@ -112,11 +90,9 @@ export const forgotPassword = async (req, res) => {
       `,
     })
 
-    console.log("🎉 SMTP SUCCESS: Email safely deployed into the network loop.")
     res.json({ success: true, message: 'If that email exists, a reset link was sent.' })
   } catch (err) {
-    console.error("❌ CRITICAL BACKEND EXCEPTION ENCOUNTERED:")
-    console.error(err.message)
+    console.error("forgotPassword error:", err.message)
     res.status(500).json({ success: false, message: err.message })
   }
 }
@@ -137,7 +113,6 @@ export const resetPassword = async (req, res) => {
     )
     res.json({ success: true, message: 'Password reset successfully.' })
   } catch (err) {
-    console.error("RESET_PASSWORD_SERVER_ERROR:", err.message)
     res.status(500).json({ success: false, message: err.message })
   }
 }
