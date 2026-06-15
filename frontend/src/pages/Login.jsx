@@ -160,6 +160,45 @@ export default function Login() {
             </div>
           )}
 
+          {/* Demo Credentials */}
+<div style={{
+  background: '#f0f7ff',
+  border: '1.5px solid #bfdbfe',
+  borderRadius: 12,
+  padding: '14px 16px',
+  marginBottom: 24,
+}}>
+  <p style={{ fontSize: 12, fontWeight: 700, color: '#1a6bcc', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+    Demo Credentials
+  </p>
+  <div style={{ display: 'flex', gap: 8 }}>
+    <button
+      type="button"
+      onClick={() => setForm({ email: 'customer@shopwave.com', password: 'Demo@1234' })}
+      style={{
+        flex: 1, padding: '8px 10px', borderRadius: 8,
+        background: '#fff', border: '1.5px solid #bfdbfe',
+        fontSize: 12, fontWeight: 600, color: '#1a6bcc',
+        cursor: 'pointer',
+      }}
+    >
+      👤 Customer Login
+    </button>
+    <button
+      type="button"
+      onClick={() => setForm({ email: 'admin@shopwave.com', password: 'Demo@1234' })}
+      style={{
+        flex: 1, padding: '8px 10px', borderRadius: 8,
+        background: '#fff', border: '1.5px solid #bfdbfe',
+        fontSize: 12, fontWeight: 600, color: '#1a6bcc',
+        cursor: 'pointer',
+      }}
+    >
+      🛡️ Admin Login
+    </button>
+  </div>
+</div>
+
           <form onSubmit={handleSubmit}>
 
             {/* Email */}
