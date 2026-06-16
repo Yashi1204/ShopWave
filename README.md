@@ -37,14 +37,23 @@ A full-stack e-commerce platform built with React, Node.js, Express, and Postgre
 
 ## 📸 Screenshots
 
-### Home / Product Listing
-![Home](screenshots/home.png)
+### Login
+![Login](screenshots/Login.png)
 
-### Cart & Checkout
-![Cart](screenshots/cart.png)
+### Checkout
+![Checkout](screenshots/Checkout.png)
+
+### Payment
+![Payment](screenshots/Payment.png)
+
+### Payment Confirmation
+![Payment Confirmation](screenshots/PaymentConfirmation.png)
+
+### Order Tracking
+![Orders](screenshots/Orders.png)
 
 ### Admin Dashboard
-![Admin Dashboard](screenshots/admin-dashboard.png)
+![Admin Dashboard](screenshots/Dashboard.png)
 
 ---
 
