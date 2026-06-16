@@ -1,11 +1,13 @@
 # 🛍️ ShopWave
-A production-ready, full-stack e-commerce platform built with React, Node.js, Express, and PostgreSQL. Features JWT authentication, cart management, Razorpay payments, product reviews, wishlist, and a live admin dashboard.
+A full-stack e-commerce platform built with React, Node.js, Express, and PostgreSQL. Features JWT authentication, cart management, Razorpay payments, product reviews, wishlist, and a live admin dashboard.
 
-> Built to demonstrate full-stack development, relational database design, REST API architecture, and modern React UI.
+> Built to practice full-stack development, relational database design, REST API architecture, and modern React UI.
+
+🔗 **Live Demo:** [shop-wave-ivory.vercel.app](https://shop-wave-ivory.vercel.app/)
 
 ---
 
-## 🌐 Live Features
+## 🌐 Features
 - 🔐 **Auth System** — JWT login/register + forgot/reset password via Gmail SMTP
 - 🛒 **Cart & Checkout** — Add, update, remove items with real-time total
 - 💳 **Razorpay Payments** — Test mode payment gateway integration
@@ -30,6 +32,19 @@ A production-ready, full-stack e-commerce platform built with React, Node.js, Ex
 | Email | Nodemailer + Gmail SMTP |
 | Payment | Razorpay |
 | Dev Tools | Nodemon, Docker Compose |
+
+---
+
+## 📸 Screenshots
+
+### Home / Product Listing
+![Home](screenshots/home.png)
+
+### Cart & Checkout
+![Cart](screenshots/cart.png)
+
+### Admin Dashboard
+![Admin Dashboard](screenshots/admin-dashboard.png)
 
 ---
 
@@ -108,19 +123,19 @@ npm run dev
 
 ## 🔑 Key Technical Highlights
 
-### Role-Based Access Control
+**Role-Based Access Control**
 Two roles — `customer` and `admin` — enforced at both route middleware and DB constraint level. Admin routes are protected by a dedicated `adminOnly` middleware that verifies JWT and checks role.
 
-### Password Reset Flow
+**Password Reset Flow**
 Secure token-based reset — a crypto-generated token is hashed, stored in DB with a bigint expiry timestamp, and emailed via Nodemailer. Token is single-use and expires in 30 minutes.
 
-### Relational Database Design
+**Relational Database Design**
 6 normalized tables with foreign key constraints and cascading deletes — users, products, orders, order_items, reviews, wishlist. Products have category and is_active indexes for fast filtering.
 
-### Cart & Order System
+**Cart & Order System**
 Cart items are stored per user in DB (not localStorage). On checkout, cart is atomically converted to an order with individual order_items rows preserving price at time of purchase.
 
-### Admin Dashboard
+**Admin Dashboard**
 Live stats aggregated from DB — total revenue (SUM), order count, product count, user count. Order status updates flow through a CHECK constraint enforcing valid transitions.
 
 ---
@@ -142,7 +157,7 @@ Live stats aggregated from DB — total revenue (SUM), order count, product coun
 - Building JWT auth from scratch including secure password reset with expiring tokens
 - Implementing role-based middleware for protecting admin routes
 - Managing cart state server-side to support multi-device sessions
-- Integrating third-party payment gateway (Razorpay) in a full-stack flow
+- Integrating a third-party payment gateway (Razorpay) in a full-stack flow
 - Using Docker Compose to run PostgreSQL locally with persistent volumes
 - Structuring a REST API with separation of routes, controllers, and middleware
 
