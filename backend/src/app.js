@@ -20,6 +20,23 @@ app.use(cors({
 
 app.use(express.json())
 
+app.get('/', (req, res) => {
+  res.json({
+    name: 'ShopWave API',
+    status: 'running',
+    endpoints: {
+      auth: '/api/auth',
+      products: '/api/products',
+      cart: '/api/cart',
+      orders: '/api/orders',
+      admin: '/api/admin',
+      reviews: '/api/products/:id/reviews',
+      wishlist: '/api/wishlist',
+      health: '/api/health'
+    }
+  })
+})
+
 app.use('/api/auth',                    authRoutes)
 app.use('/api/products',               productRoutes)
 app.use('/api/cart',                   cartRoutes)
