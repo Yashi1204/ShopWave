@@ -4,7 +4,9 @@ import crypto from 'crypto'
 import { Resend } from 'resend'
 import pool from '../config/db.js'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+  console.warn('WARNING: JWT_SECRET is not set. Set it in your environment settings.')
+}
 
 const sign = (user) => jwt.sign(
   { id: user.id, email: user.email, role: user.role },
@@ -12,13 +14,31 @@ const sign = (user) => jwt.sign(
   { expiresIn: '7d' }
 )
 
+// The email client is created only when an email is actually sent,
+// so a missing key can never stop the server from starting.
+let resendClient = null
+const getResend = () => {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY is not set')
+  }
+  if (!resendClient) resendClient = new Resend(process.env.RESEND_API_KEY)
+  return resendClient
+}
+
 export const register = async (req, res) => {
-  const { name, email, password } = req.body
-  if (!name || !email || !password)
+  const { name, email, password } = req.body || {}
+  if (!name || !email || !password) {
     return res.status(400).json({ message: 'All fields required' })
+  }
+  if (typeof password !== 'string' || password.length < 6) {
+    return res.status(400).json({ message: 'Password must be at least 6 characters' })
+  }
+
   try {
     const exists = await pool.query('SELECT id FROM users WHERE email=$1', [email])
-    if (exists.rows.length) return res.status(409).json({ message: 'Email already registered' })
+    if (exists.rows.length) {
+      return res.status(409).json({ message: 'Email already registered' })
+    }
 
     const hash = await bcrypt.hash(password, 10)
     const { rows } = await pool.query(
@@ -27,14 +47,25 @@ export const register = async (req, res) => {
     )
     res.status(201).json({ token: sign(rows[0]), user: rows[0] })
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    if (err.code === '23505') {
+      return res.status(409).json({ message: 'Email already registered' })
+    }
+    console.error('register error:', err)
+    res.status(500).json({ message: 'Could not create account' })
   }
 }
 
 export const login = async (req, res) => {
-  const { email, password } = req.body
+  const { email, password } = req.body || {}
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password required' })
+  }
+
   try {
-    const { rows } = await pool.query('SELECT * FROM users WHERE email=$1', [email])
+    const { rows } = await pool.query(
+      'SELECT id,name,email,role,created_at,password_hash FROM users WHERE email=$1',
+      [email]
+    )
     if (!rows.length) return res.status(401).json({ message: 'Invalid credentials' })
 
     const valid = await bcrypt.compare(password, rows[0].password_hash)
@@ -43,19 +74,31 @@ export const login = async (req, res) => {
     const { password_hash, ...user } = rows[0]
     res.json({ token: sign(user), user })
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    console.error('login error:', err)
+    res.status(500).json({ message: 'Could not log in' })
   }
 }
 
 export const getMe = async (req, res) => {
-  const { rows } = await pool.query(
-    'SELECT id,name,email,role,created_at FROM users WHERE id=$1', [req.user.id]
-  )
-  res.json(rows[0])
+  try {
+    const { rows } = await pool.query(
+      'SELECT id,name,email,role,created_at FROM users WHERE id=$1',
+      [req.user.id]
+    )
+    if (!rows.length) return res.status(404).json({ message: 'User not found' })
+    res.json(rows[0])
+  } catch (err) {
+    console.error('getMe error:', err)
+    res.status(500).json({ message: 'Could not load profile' })
+  }
 }
 
 export const forgotPassword = async (req, res) => {
-  const { email } = req.body
+  const { email } = req.body || {}
+  if (!email) {
+    return res.status(400).json({ success: false, message: 'Email is required' })
+  }
+
   try {
     const { rows } = await pool.query('SELECT id FROM users WHERE email=$1', [email])
 
@@ -74,7 +117,7 @@ export const forgotPassword = async (req, res) => {
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173'
     const resetUrl = `${clientUrl}/reset-password?token=${token}`
 
-    await resend.emails.send({
+    const result = await getResend().emails.send({
       from: 'ShopWave <onboarding@resend.dev>',
       to: email,
       subject: 'Reset your ShopWave password',
@@ -90,21 +133,34 @@ export const forgotPassword = async (req, res) => {
       `,
     })
 
+    if (result && result.error) {
+      throw new Error(result.error.message || 'Email provider rejected the message')
+    }
+
     res.json({ success: true, message: 'If that email exists, a reset link was sent.' })
   } catch (err) {
-    console.error("forgotPassword error:", err.message)
-    res.status(500).json({ success: false, message: err.message })
+    console.error('forgotPassword error:', err.message)
+    res.status(500).json({ success: false, message: 'Could not send the reset email' })
   }
 }
 
 export const resetPassword = async (req, res) => {
-  const { token, password } = req.body
+  const { token, password } = req.body || {}
+  if (!token || !password) {
+    return res.status(400).json({ success: false, message: 'Token and new password required' })
+  }
+  if (typeof password !== 'string' || password.length < 6) {
+    return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' })
+  }
+
   try {
     const { rows } = await pool.query(
       'SELECT id FROM users WHERE reset_token=$1 AND reset_token_expires > $2',
       [token, Date.now()]
     )
-    if (!rows.length) return res.status(400).json({ message: 'Invalid or expired reset link.' })
+    if (!rows.length) {
+      return res.status(400).json({ message: 'Invalid or expired reset link.' })
+    }
 
     const hash = await bcrypt.hash(password, 10)
     await pool.query(
@@ -113,6 +169,7 @@ export const resetPassword = async (req, res) => {
     )
     res.json({ success: true, message: 'Password reset successfully.' })
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    console.error('resetPassword error:', err)
+    res.status(500).json({ success: false, message: 'Could not reset password' })
   }
 }
