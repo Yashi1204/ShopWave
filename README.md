@@ -1,4 +1,7 @@
 # 🛍️ ShopWave
+
+> ⏸️ **Live demo is temporarily paused** because my free hosting plan reached its monthly limit; it resumes on Nov 1. Screenshots and setup instructions are below, and the full source code is in this repo.
+> 
 A full-stack e-commerce platform built with React, Node.js, Express, and PostgreSQL. Features JWT authentication, cart management, Razorpay payments, product reviews, wishlist, and a live admin dashboard.
 
 > Built to practice full-stack development, relational database design, REST API architecture, and modern React UI.
